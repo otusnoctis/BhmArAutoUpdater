@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 
-namespace BhmReleaseSystem;
+namespace BhmArAutoUpdater;
 
 public static class MauiProgram
 {

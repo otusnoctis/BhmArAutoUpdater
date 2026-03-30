@@ -1,4 +1,4 @@
-﻿namespace BhmReleaseSystem;
+﻿namespace BhmArAutoUpdater;
 
 public partial class App : Application
 {
