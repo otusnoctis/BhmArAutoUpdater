@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace BhmReleaseSystem;
+namespace BhmArAutoUpdater;
 
 public class Program
 {

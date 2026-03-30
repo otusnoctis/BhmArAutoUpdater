@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace BhmReleaseSystem;
+namespace BhmArAutoUpdater;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

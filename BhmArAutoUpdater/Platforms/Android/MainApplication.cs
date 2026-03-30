@@ -1,7 +1,7 @@
 ﻿using Android.App;
 using Android.Runtime;
 
-namespace BhmReleaseSystem;
+namespace BhmArAutoUpdater;
 
 [Application]
 public class MainApplication : MauiApplication
