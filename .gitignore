@@ -1,0 +1,17 @@
+# Build
+bin/
+obj/
+
+# NuGet
+/packages/
+
+# Rider / JetBrains
+.idea/
+*.iml
+
+# ReSharper
+_ReSharper.Caches/
+
+# User-specific
+*.user
+*.suo
