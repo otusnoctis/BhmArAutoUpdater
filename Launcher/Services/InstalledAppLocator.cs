@@ -7,11 +7,29 @@ public sealed class InstalledAppLocator
 {
     private const string AppFolderName = "app";
     private const string AppExecutableName = "BhmArAutoUpdater.exe";
+    private const string MainProjectName = "BhmArAutoUpdater";
     private static readonly Regex FolderNamePattern = new(
         @"^BhmArAutoUpdater_(?<version>\d+\.\d+\.\d+)_win-x64$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public IReadOnlyList<InstalledApp> FindInstalledApps()
+    {
+        var packagedInstallations = FindPackagedInstallations();
+        if (packagedInstallations.Count > 0)
+        {
+            return packagedInstallations;
+        }
+
+        var developmentInstallation = TryFindDevelopmentInstallation();
+        if (developmentInstallation is null)
+        {
+            return [];
+        }
+
+        return [developmentInstallation];
+    }
+
+    private static IReadOnlyList<InstalledApp> FindPackagedInstallations()
     {
         var appRoot = GetAppRoot();
         if (!Directory.Exists(appRoot))
@@ -63,5 +81,56 @@ public sealed class InstalledAppLocator
             ExecutablePath = executablePath,
             Version = version
         };
+    }
+
+    private static InstalledApp? TryFindDevelopmentInstallation()
+    {
+        var launcherDirectory = Path.GetDirectoryName(Environment.ProcessPath)
+            ?? AppContext.BaseDirectory;
+
+        var solutionRoot = FindSolutionRoot(launcherDirectory);
+        if (solutionRoot is null)
+        {
+            return null;
+        }
+
+        var developmentExecutablePath = Path.Combine(
+            solutionRoot,
+            MainProjectName,
+            "bin",
+            "Debug",
+            "net10.0-windows10.0.19041.0",
+            "win-x64",
+            AppExecutableName);
+
+        if (!File.Exists(developmentExecutablePath))
+        {
+            return null;
+        }
+
+        return new InstalledApp
+        {
+            DisplayName = "Development build (Debug win-x64)",
+            FolderName = "development",
+            ExecutablePath = developmentExecutablePath,
+            Version = new Version(int.MaxValue, 0, 0)
+        };
+    }
+
+    private static string? FindSolutionRoot(string startDirectory)
+    {
+        var currentDirectory = new DirectoryInfo(startDirectory);
+        while (currentDirectory is not null)
+        {
+            var solutionPath = Path.Combine(currentDirectory.FullName, "BhmArAutoUpdater.slnx");
+            if (File.Exists(solutionPath))
+            {
+                return currentDirectory.FullName;
+            }
+
+            currentDirectory = currentDirectory.Parent;
+        }
+
+        return null;
     }
 }
