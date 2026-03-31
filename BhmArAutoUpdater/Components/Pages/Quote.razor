@@ -1,0 +1,15 @@
+@page "/quote"
+
+<h1>Quote</h1>
+
+<div class="quote-page">
+    <label class="quote-label" for="quote-text">Texto</label>
+    <textarea id="quote-text"
+              class="quote-input"
+              placeholder="Escribe aqui..."
+              @bind="quoteText"></textarea>
+</div>
+
+@code {
+    private string quoteText = string.Empty;
+}

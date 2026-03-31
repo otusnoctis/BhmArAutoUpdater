@@ -2,18 +2,25 @@ html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+:root {
+    --app-accent: #1f6fe5;
+    --app-accent-strong: #114eac;
+    --app-accent-soft: #d9e9ff;
+    --app-accent-gradient: linear-gradient(135deg, #2f7be5 0%, #1657bf 100%);
+}
+
 a, .btn-link {
-    color: #006bb7;
+    color: var(--app-accent-strong);
 }
 
 .btn-primary {
     color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    background: var(--app-accent-gradient);
+    border-color: #1657bf;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(47, 123, 229, 0.35);
 }
 
 .content {
