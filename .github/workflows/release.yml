@@ -7,6 +7,9 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PROJECT_NAME: BhmArAutoUpdater
+  TARGET_FRAMEWORK: net10.0-windows10.0.19041.0
+  RUNTIME_ID: win-x64
 
 permissions:
   contents: write
@@ -34,17 +37,30 @@ jobs:
         run: >
           dotnet publish ./BhmArAutoUpdater/BhmArAutoUpdater.csproj
           -c Release
-          -f net10.0-windows10.0.19041.0
-          -r win-x64
+          -f ${{ env.TARGET_FRAMEWORK }}
+          -r ${{ env.RUNTIME_ID }}
           --self-contained true
-          -o ./publish/win-x64
+          -o ./publish/${{ env.RUNTIME_ID }}
+
+      - name: Prepare release package structure
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $technicalFolderName = "${{ env.PROJECT_NAME }}_$version" + "_${{ env.RUNTIME_ID }}"
+          $stagingRoot = Join-Path $PWD "staging"
+          $appRoot = Join-Path $stagingRoot "app"
+          $versionedAppRoot = Join-Path $appRoot $technicalFolderName
+
+          New-Item -ItemType Directory -Path $versionedAppRoot -Force | Out-Null
+          Copy-Item -Path "./publish/${{ env.RUNTIME_ID }}/*" -Destination $versionedAppRoot -Recurse -Force
           
       - name: Create ZIP package
-        run: Compress-Archive -Path ./publish/win-x64/* -DestinationPath ./BhmArAutoUpdater-${{ github.ref_name }}-win-x64.zip
+        shell: pwsh
+        run: Compress-Archive -Path ./staging/* -DestinationPath ./${{ env.PROJECT_NAME }}.zip
 
       - name: Create release and upload asset
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: ./BhmArAutoUpdater-${{ github.ref_name }}-win-x64.zip
+          files: ./${{ env.PROJECT_NAME }}.zip
           
