@@ -1,34 +1,33 @@
-using System.Text.RegularExpressions;
-
 namespace BhmArAutoUpdater.Services;
 
 public sealed class InstalledVersionCatalog
 {
-    private static readonly Regex FolderNamePattern = new(
-        @"^BhmArAutoUpdater_(?<version>\d+\.\d+\.\d+)_win-x64$",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private readonly AppEnvironment _appEnvironment;
+
+    public InstalledVersionCatalog(AppEnvironment appEnvironment)
+    {
+        _appEnvironment = appEnvironment;
+    }
 
     public VersionCatalogSnapshot GetSnapshot()
     {
-        var executableDirectory = Path.GetDirectoryName(Environment.ProcessPath) ?? AppContext.BaseDirectory;
-        var currentFolderName = new DirectoryInfo(executableDirectory).Name;
-        var appRoot = Directory.GetParent(executableDirectory)?.FullName;
-
         var versions = new List<InstalledVersionInfo>();
-        if (appRoot is not null && Directory.Exists(appRoot))
+        if (Directory.Exists(_appEnvironment.AppRoot))
         {
             versions.AddRange(
-                Directory.GetDirectories(appRoot)
+                Directory.GetDirectories(_appEnvironment.AppRoot)
                     .Select(TryCreateInstalledVersionInfo)
                     .Where(version => version is not null)
                     .Cast<InstalledVersionInfo>()
                     .OrderByDescending(version => version.Version));
         }
 
-        var currentVersion = versions.FirstOrDefault(version => version.FolderName == currentFolderName);
+        var currentVersion = versions.FirstOrDefault(version => version.FolderName == _appEnvironment.CurrentFolderName);
         if (currentVersion is null)
         {
-            currentVersion = TryCreateInstalledVersionInfo(currentFolderName);
+            currentVersion = _appEnvironment.CurrentFolderName is null
+                ? null
+                : TryCreateInstalledVersionInfo(_appEnvironment.CurrentFolderName);
             if (currentVersion is not null)
             {
                 versions.Insert(0, currentVersion);
@@ -37,7 +36,7 @@ public sealed class InstalledVersionCatalog
 
         if (currentVersion is null)
         {
-            currentVersion = TryCreateDevelopmentVersion(executableDirectory);
+            currentVersion = TryCreateDevelopmentVersion();
         }
 
         return new VersionCatalogSnapshot
@@ -47,16 +46,11 @@ public sealed class InstalledVersionCatalog
         };
     }
 
-    private static InstalledVersionInfo? TryCreateInstalledVersionInfo(string pathOrFolderName)
+    private InstalledVersionInfo? TryCreateInstalledVersionInfo(string pathOrFolderName)
     {
         var folderName = Path.GetFileName(pathOrFolderName);
-        var match = FolderNamePattern.Match(folderName);
-        if (!match.Success)
-        {
-            return null;
-        }
-
-        if (!Version.TryParse(match.Groups["version"].Value, out var version))
+        var version = _appEnvironment.ParseVersion(folderName);
+        if (version is null)
         {
             return null;
         }
@@ -70,26 +64,16 @@ public sealed class InstalledVersionCatalog
         };
     }
 
-    private static InstalledVersionInfo? TryCreateDevelopmentVersion(string executableDirectory)
+    private InstalledVersionInfo? TryCreateDevelopmentVersion()
     {
-        var currentDirectory = new DirectoryInfo(executableDirectory);
-        while (currentDirectory is not null)
-        {
-            var solutionPath = Path.Combine(currentDirectory.FullName, "BhmArAutoUpdater.slnx");
-            if (File.Exists(solutionPath))
+        return !_appEnvironment.IsDevelopmentMode
+            ? null
+            : new InstalledVersionInfo
             {
-                return new InstalledVersionInfo
-                {
-                    DisplayName = "Development build (dev mode)",
-                    FolderName = "development",
-                    Version = new Version(0, 0, 0),
-                    IsDevelopmentMode = true
-                };
-            }
-
-            currentDirectory = currentDirectory.Parent;
-        }
-
-        return null;
+                DisplayName = "Development build (dev mode)",
+                FolderName = "development",
+                Version = new Version(0, 0, 0),
+                IsDevelopmentMode = true
+            };
     }
 }
