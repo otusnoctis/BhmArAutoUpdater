@@ -69,4 +69,30 @@ public sealed class ReleaseInstaller
             }
         }
     }
+
+    public ReleaseInstallResult DeleteInstalledVersion(GitHubReleaseInfo release)
+    {
+        var targetFolderName = _appEnvironment.GetVersionFolderName(release.Version);
+        var targetFolderPath = Path.Combine(_appEnvironment.AppRoot, targetFolderName);
+
+        if (string.Equals(_appEnvironment.CurrentFolderName, targetFolderName, StringComparison.OrdinalIgnoreCase))
+        {
+            return ReleaseInstallResult.Failed("La version actual no se puede eliminar desde la aplicacion en ejecucion.");
+        }
+
+        if (!Directory.Exists(targetFolderPath))
+        {
+            return ReleaseInstallResult.Failed($"La version {release.DisplayVersion} no esta descargada.");
+        }
+
+        try
+        {
+            Directory.Delete(targetFolderPath, true);
+            return ReleaseInstallResult.Succeeded($"La version {release.DisplayVersion} se ha eliminado correctamente.");
+        }
+        catch (Exception ex)
+        {
+            return ReleaseInstallResult.Failed($"No se pudo eliminar la version {release.DisplayVersion}: {ex.Message}");
+        }
+    }
 }

@@ -1,0 +1,220 @@
+@page "/about"
+@inject BhmArAutoUpdater.Services.InstalledVersionCatalog VersionCatalog
+@inject BhmArAutoUpdater.Services.GitHubReleaseCatalog GitHubReleaseCatalog
+@inject BhmArAutoUpdater.Services.ReleaseInstaller ReleaseInstaller
+
+<div class="about-page">
+    <div class="about-header">
+        <h1>About</h1>
+        @if (snapshot.IsDevelopmentMode)
+        {
+            <span class="dev-chip">DEV MODE</span>
+        }
+    </div>
+
+    <p class="about-version">
+        <span class="about-label">Version</span>
+        <strong>@(snapshot.CurrentVersion?.DisplayName ?? "No identificada")</strong>
+    </p>
+
+    <div class="about-toolbar">
+        <button class="btn btn-primary" @onclick="RefreshReleasesAsync" disabled="@isBusy">Consultar releases</button>
+        <span class="about-last-refresh">
+            Ultima consulta de releases:
+            <strong>@(lastReleaseRefreshAt?.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "sin datos")</strong>
+        </span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(feedbackMessage))
+    {
+        <p class="about-feedback">@feedbackMessage</p>
+    }
+
+    @if (releaseLoadError is not null)
+    {
+        <p class="about-error"><strong>Error:</strong> @releaseLoadError</p>
+    }
+    else if (releases is null)
+    {
+        <p>Cargando releases...</p>
+    }
+    else if (releases.Count == 0)
+    {
+        <p>No se encontraron releases publicadas.</p>
+    }
+    else
+    {
+        <div class="about-table-shell @(snapshot.IsDevelopmentMode ? "about-table-shell-dev" : null)">
+            <table class="table about-table">
+                <thead>
+                <tr>
+                    <th>Version</th>
+                    <th>Publicada</th>
+                    <th>Actual</th>
+                    <th>Descargada</th>
+                    <th>Accion</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var release in releases)
+                {
+                    <tr class="@GetRowClass(release)">
+                        <td>@release.DisplayVersion</td>
+                        <td>@release.PublishedAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@(release.IsCurrentVersion ? "Si" : "No")</td>
+                        <td>@(release.IsDownloaded ? "Si" : "No")</td>
+                        <td class="about-action-cell">
+                            <div class="about-action-slot">
+                                @if (CanShowDownload(release))
+                                {
+                                    <button class="about-icon-button"
+                                            @onclick="() => DownloadReleaseAsync(release)"
+                                            disabled="@isBusy"
+                                            title="Descargar version"
+                                            aria-label="Descargar version">
+                                        <span class="about-action-icon about-download-icon" aria-hidden="true"></span>
+                                    </button>
+                                }
+                                else if (CanShowDelete(release))
+                                {
+                                    <button class="about-icon-button about-icon-button-danger"
+                                            @onclick="() => DeleteReleaseAsync(release)"
+                                            disabled="@isBusy"
+                                            title="Eliminar version"
+                                            aria-label="Eliminar version">
+                                        <span class="about-action-icon about-delete-icon" aria-hidden="true"></span>
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private BhmArAutoUpdater.Services.VersionCatalogSnapshot snapshot = default!;
+    private IReadOnlyList<BhmArAutoUpdater.Services.GitHubReleaseInfo>? releases;
+    private string? releaseLoadError;
+    private string? feedbackMessage;
+    private DateTimeOffset? lastReleaseRefreshAt;
+    private bool isBusy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        RefreshInstalledVersions();
+        await RefreshReleasesAsync();
+    }
+
+    private void RefreshInstalledVersions()
+    {
+        snapshot = VersionCatalog.GetSnapshot();
+    }
+
+    private async Task RefreshReleasesAsync()
+    {
+        isBusy = true;
+        releaseLoadError = null;
+        feedbackMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            RefreshInstalledVersions();
+            releases = await GitHubReleaseCatalog.GetReleasesAsync();
+            lastReleaseRefreshAt = DateTimeOffset.Now;
+        }
+        catch (Exception ex)
+        {
+            releaseLoadError = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task DownloadReleaseAsync(BhmArAutoUpdater.Services.GitHubReleaseInfo release)
+    {
+        isBusy = true;
+        releaseLoadError = null;
+        feedbackMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var result = await ReleaseInstaller.DownloadAndInstallAsync(release);
+            feedbackMessage = result.Message;
+            if (!result.Success)
+            {
+                return;
+            }
+
+            RefreshInstalledVersions();
+            releases = await GitHubReleaseCatalog.GetReleasesAsync();
+            lastReleaseRefreshAt = DateTimeOffset.Now;
+        }
+        catch (Exception ex)
+        {
+            releaseLoadError = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private async Task DeleteReleaseAsync(BhmArAutoUpdater.Services.GitHubReleaseInfo release)
+    {
+        isBusy = true;
+        releaseLoadError = null;
+        feedbackMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var result = ReleaseInstaller.DeleteInstalledVersion(release);
+            feedbackMessage = result.Message;
+            if (!result.Success)
+            {
+                return;
+            }
+
+            RefreshInstalledVersions();
+            releases = await GitHubReleaseCatalog.GetReleasesAsync();
+            lastReleaseRefreshAt = DateTimeOffset.Now;
+        }
+        catch (Exception ex)
+        {
+            releaseLoadError = ex.Message;
+        }
+        finally
+        {
+            isBusy = false;
+        }
+    }
+
+    private string? GetRowClass(BhmArAutoUpdater.Services.GitHubReleaseInfo release)
+    {
+        if (snapshot.IsDevelopmentMode)
+        {
+            return "about-row-disabled";
+        }
+
+        return !release.HasPortableZip ? "about-row-muted" : null;
+    }
+
+    private bool CanShowDownload(BhmArAutoUpdater.Services.GitHubReleaseInfo release)
+        => !snapshot.IsDevelopmentMode
+           && !release.IsCurrentVersion
+           && !release.IsDownloaded
+           && release.HasPortableZip;
+
+    private bool CanShowDelete(BhmArAutoUpdater.Services.GitHubReleaseInfo release)
+        => !snapshot.IsDevelopmentMode
+           && !release.IsCurrentVersion
+           && release.IsDownloaded;
+}
