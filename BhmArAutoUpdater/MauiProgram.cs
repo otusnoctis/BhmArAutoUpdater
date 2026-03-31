@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+using BhmArAutoUpdater.Services;
+using Microsoft.Extensions.Logging;
 
 namespace BhmArAutoUpdater;
 
@@ -12,6 +13,7 @@ public static class MauiProgram
             .ConfigureFonts(fonts => { fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular"); });
 
         builder.Services.AddMauiBlazorWebView();
+        builder.Services.AddSingleton<InstalledVersionCatalog>();
 
 #if DEBUG
         builder.Services.AddBlazorWebViewDeveloperTools();

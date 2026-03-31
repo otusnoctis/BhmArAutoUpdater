@@ -1,8 +1,42 @@
-﻿@page "/"
+@page "/"
+@inject BhmArAutoUpdater.Services.InstalledVersionCatalog VersionCatalog
 
-<h1>Hello, world!</h1>
+<h1>BhmArAutoUpdater</h1>
 
-Welcome to your new app.
+<p>
+    Version cargada:
+    <strong>@(snapshot.CurrentVersion?.DisplayName ?? "No identificada")</strong>
+</p>
 
-Hola. Adeu siau.
-Hello again.
+@if (snapshot.IsDevelopmentMode)
+{
+    <p><strong>Modo:</strong> dev mode</p>
+}
+
+@if (otherVersions.Count == 0)
+{
+    <p>No hay otras versiones detectadas en la carpeta de la app.</p>
+}
+else
+{
+    <p>Otras versiones disponibles en el sistema de archivos:</p>
+    <ul>
+        @foreach (var version in otherVersions)
+        {
+            <li>@version.DisplayName</li>
+        }
+    </ul>
+}
+
+@code {
+    private BhmArAutoUpdater.Services.VersionCatalogSnapshot snapshot = default!;
+    private IReadOnlyList<BhmArAutoUpdater.Services.InstalledVersionInfo> otherVersions = [];
+
+    protected override void OnInitialized()
+    {
+        snapshot = VersionCatalog.GetSnapshot();
+        otherVersions = snapshot.AvailableVersions
+            .Where(version => version.FolderName != snapshot.CurrentVersion?.FolderName)
+            .ToArray();
+    }
+}
