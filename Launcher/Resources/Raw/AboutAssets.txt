@@ -1,0 +1,1 @@
+Any raw assets you place in this folder become available to the app at runtime.

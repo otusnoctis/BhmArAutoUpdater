@@ -10,6 +10,8 @@ env:
   PROJECT_NAME: BhmArAutoUpdater
   TARGET_FRAMEWORK: net10.0-windows10.0.19041.0
   RUNTIME_ID: win-x64
+  LAUNCHER_PROJECT: ./Launcher/Launcher.csproj
+  APP_PROJECT: ./BhmArAutoUpdater/BhmArAutoUpdater.csproj
 
 permissions:
   contents: write
@@ -31,16 +33,25 @@ jobs:
         run: dotnet workload install maui
 
       - name: Restore
-        run: dotnet restore ./BhmArAutoUpdater/BhmArAutoUpdater.csproj
-          
-      - name: Publish Win-x64
+        run: dotnet restore ./BhmArAutoUpdater.slnx
+
+      - name: Publish Launcher
         run: >
-          dotnet publish ./BhmArAutoUpdater/BhmArAutoUpdater.csproj
+          dotnet publish ${{ env.LAUNCHER_PROJECT }}
           -c Release
           -f ${{ env.TARGET_FRAMEWORK }}
           -r ${{ env.RUNTIME_ID }}
           --self-contained true
-          -o ./publish/${{ env.RUNTIME_ID }}
+          -o ./publish/launcher
+          
+      - name: Publish App Win-x64
+        run: >
+          dotnet publish ${{ env.APP_PROJECT }}
+          -c Release
+          -f ${{ env.TARGET_FRAMEWORK }}
+          -r ${{ env.RUNTIME_ID }}
+          --self-contained true
+          -o ./publish/app/${{ env.RUNTIME_ID }}
 
       - name: Prepare release package structure
         shell: pwsh
@@ -51,8 +62,10 @@ jobs:
           $appRoot = Join-Path $stagingRoot "app"
           $versionedAppRoot = Join-Path $appRoot $technicalFolderName
 
+          New-Item -ItemType Directory -Path $stagingRoot -Force | Out-Null
+          Copy-Item -Path "./publish/launcher/*" -Destination $stagingRoot -Recurse -Force
           New-Item -ItemType Directory -Path $versionedAppRoot -Force | Out-Null
-          Copy-Item -Path "./publish/${{ env.RUNTIME_ID }}/*" -Destination $versionedAppRoot -Recurse -Force
+          Copy-Item -Path "./publish/app/${{ env.RUNTIME_ID }}/*" -Destination $versionedAppRoot -Recurse -Force
           
       - name: Create ZIP package
         shell: pwsh

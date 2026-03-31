@@ -1,4 +1,7 @@
 <Solution>
+  <Project Path="Launcher/Launcher.csproj">
+    <Deploy />
+  </Project>
   <Project Path="BhmArAutoUpdater/BhmArAutoUpdater.csproj">
     <Deploy />
   </Project>

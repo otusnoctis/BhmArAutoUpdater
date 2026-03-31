@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Launcher.MainPage"
+             Title="BhmArAutoUpdater">
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="16">
+            <Label Text="BhmArAutoUpdater"
+                   FontSize="28"
+                   FontAttributes="Bold" />
+
+            <Label x:Name="StatusLabel"
+                   Text="Buscando versiones instaladas..."
+                   FontSize="16" />
+
+            <VerticalStackLayout x:Name="SelectionPanel"
+                                 IsVisible="False"
+                                 Spacing="12">
+                <Label Text="Selecciona la version que quieres iniciar:"
+                       FontSize="16" />
+
+                <Picker x:Name="VersionPicker"
+                        Title="Version disponible"
+                        ItemDisplayBinding="{Binding DisplayName}" />
+
+                <Button Text="Iniciar version seleccionada"
+                        Clicked="OnLaunchClicked" />
+            </VerticalStackLayout>
+
+            <Button x:Name="RetryButton"
+                    Text="Volver a buscar"
+                    IsVisible="False"
+                    Clicked="OnRetryClicked" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
