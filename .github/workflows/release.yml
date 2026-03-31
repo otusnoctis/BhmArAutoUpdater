@@ -42,6 +42,9 @@ jobs:
           -f ${{ env.TARGET_FRAMEWORK }}
           -r ${{ env.RUNTIME_ID }}
           --self-contained true
+          -p:PublishSingleFile=true
+          -p:DebugType=None
+          -p:DebugSymbols=false
           -o ./publish/launcher
           
       - name: Publish App Win-x64
@@ -63,7 +66,7 @@ jobs:
           $versionedAppRoot = Join-Path $appRoot $technicalFolderName
 
           New-Item -ItemType Directory -Path $stagingRoot -Force | Out-Null
-          Copy-Item -Path "./publish/launcher/*" -Destination $stagingRoot -Recurse -Force
+          Copy-Item -Path "./publish/launcher/${{ env.PROJECT_NAME }}.exe" -Destination $stagingRoot -Force
           New-Item -ItemType Directory -Path $versionedAppRoot -Force | Out-Null
           Copy-Item -Path "./publish/app/${{ env.RUNTIME_ID }}/*" -Destination $versionedAppRoot -Recurse -Force
           
