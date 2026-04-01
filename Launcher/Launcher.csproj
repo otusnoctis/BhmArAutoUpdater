@@ -8,6 +8,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <ApplicationIcon>..\BhmArAutoUpdater\Resources\AppIcon\appicon.ico</ApplicationIcon>
+        <UseWindowsForms>true</UseWindowsForms>
     </PropertyGroup>
 
 </Project>

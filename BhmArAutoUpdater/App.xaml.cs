@@ -2,9 +2,10 @@
 
 public partial class App : Application
 {
-    public App()
+    public App(BhmArAutoUpdater.Services.InstalledVersionJanitor installedVersionJanitor)
     {
         InitializeComponent();
+        installedVersionJanitor.CleanupOlderVersions();
     }
 
     protected override Window CreateWindow(IActivationState? activationState)

@@ -10,7 +10,10 @@ public sealed class AppEnvironment
 
     public string ExecutableDirectory { get; }
     public string? SolutionRoot { get; }
+    public string RootDirectory { get; }
     public string AppRoot { get; }
+    public string DataDirectory { get; }
+    public string LauncherExecutablePath => Path.Combine(RootDirectory, "BhmArAutoUpdater.exe");
     public bool IsDevelopmentMode { get; }
     public string? CurrentFolderName { get; }
     public Version? CurrentVersion { get; }
@@ -27,13 +30,17 @@ public sealed class AppEnvironment
         if (CurrentFolderName is not null)
         {
             AppRoot = Directory.GetParent(ExecutableDirectory)?.FullName ?? ExecutableDirectory;
+            RootDirectory = Directory.GetParent(AppRoot)?.FullName ?? AppRoot;
+            DataDirectory = Path.Combine(RootDirectory, "data");
             IsDevelopmentMode = false;
             return;
         }
 
+        RootDirectory = SolutionRoot ?? ExecutableDirectory;
         AppRoot = SolutionRoot is null
             ? Path.Combine(ExecutableDirectory, "app")
             : Path.Combine(SolutionRoot, "app");
+        DataDirectory = Path.Combine(RootDirectory, "data");
         IsDevelopmentMode = SolutionRoot is not null;
     }
 

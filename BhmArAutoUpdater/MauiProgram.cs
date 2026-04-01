@@ -16,7 +16,10 @@ public static class MauiProgram
         builder.Services.AddMauiBlazorWebView();
         builder.Services.AddSingleton<AppEnvironment>();
         builder.Services.AddSingleton<InstalledVersionCatalog>();
+        builder.Services.AddSingleton<InstalledVersionJanitor>();
         builder.Services.AddSingleton<GitHubReleaseCatalog>();
+        builder.Services.AddSingleton<LauncherRelay>();
+        builder.Services.AddSingleton<QuoteStorage>();
         builder.Services.AddSingleton<ReleaseInstaller>();
         builder.Services.AddSingleton(_ =>
         {

@@ -1,15 +1,77 @@
 @page "/quote"
+@inject BhmArAutoUpdater.Services.QuoteStorage QuoteStorage
 
 <h1>Quote</h1>
 
 <div class="quote-page">
-    <label class="quote-label" for="quote-text">Texto</label>
+    <div class="quote-toolbar">
+        <span class="quote-status @(isDirty ? "quote-status-warning" : "quote-status-ok")">
+            @(isDirty ? "No guardado" : "Guardado")
+        </span>
+
+        <button class="btn btn-primary"
+                @onclick="SaveAsync"
+                disabled="@(!isDirty || isSaving)">
+            @(isSaving ? "Guardando..." : "Guardar")
+        </button>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(feedbackMessage))
+    {
+        <p class="quote-feedback">@feedbackMessage</p>
+    }
+
     <textarea id="quote-text"
               class="quote-input"
               placeholder="Escribe aqui..."
-              @bind="quoteText"></textarea>
+              value="@quoteText"
+              @oninput="OnInputChanged"></textarea>
 </div>
 
 @code {
     private string quoteText = string.Empty;
+    private string savedText = string.Empty;
+    private string? feedbackMessage;
+    private bool isSaving;
+
+    private bool isDirty => !string.Equals(quoteText, savedText, StringComparison.Ordinal);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var document = await QuoteStorage.LoadAsync();
+        quoteText = document.Text;
+        savedText = document.Text;
+    }
+
+    private void OnInputChanged(ChangeEventArgs args)
+    {
+        quoteText = args.Value?.ToString() ?? string.Empty;
+        feedbackMessage = null;
+    }
+
+    private async Task SaveAsync()
+    {
+        if (!isDirty)
+        {
+            return;
+        }
+
+        isSaving = true;
+        feedbackMessage = null;
+
+        try
+        {
+            await QuoteStorage.SaveAsync(new BhmArAutoUpdater.Services.QuoteDocument
+            {
+                Text = quoteText
+            });
+
+            savedText = quoteText;
+            feedbackMessage = "Cambios guardados.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
 }
