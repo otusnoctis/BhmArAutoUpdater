@@ -24,7 +24,7 @@ var velopackVersion = VelopackRuntimeInfo.VelopackNugetVersion.ToString();
 var updateStatus = BuildStartupStatus(startupState, isDevMode, appVersion);
 var instruction = isDevMode
     ? "Pulsa cualquier tecla para cerrar."
-    : "Pulsa U para buscar actualizaciones o cualquier otra tecla para cerrar.";
+    : "Pulsa U para buscar actualizaciones o cualquier otra tecla para cerrar..";
 var progressLine = string.Empty;
 
 Console.CursorVisible = false;
