@@ -1,0 +1,207 @@
+@page "/settings"
+@inject VelopackUpdateService UpdateService
+
+<PageTitle>Settings</PageTitle>
+
+<h1>Settings</h1>
+
+@if (_snapshot is null)
+{
+    <p>Cargando...</p>
+}
+else
+{
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="h5 card-title">Versiones</h2>
+            <dl class="row mb-0">
+                <dt class="col-sm-3">App</dt>
+                <dd class="col-sm-9">@_snapshot.AppVersion</dd>
+                <dt class="col-sm-3">Velopack</dt>
+                <dd class="col-sm-9">@_snapshot.VelopackVersion</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                <div>
+                    <h2 class="h5 card-title mb-1">Actualizaciones</h2>
+                    <p class="mb-0 text-body-secondary">@GetStatusSummary()</p>
+                </div>
+                @if (_snapshot.IsUpdateAvailable)
+                {
+                    <span class="badge text-bg-warning">Pendiente</span>
+                }
+                else if (!_snapshot.IsDevMode)
+                {
+                    <span class="badge text-bg-success">Al dia</span>
+                }
+            </div>
+
+            <div class="@GetUpdateAlertClass()" role="status">
+                <strong>@GetUpdateHeadline()</strong>
+                <div>@_snapshot.UpdateMessage</div>
+            </div>
+
+            @if (_snapshot.LastCheckedAt is not null)
+            {
+                <p class="text-body-secondary mt-3 mb-0">
+                    Ultima comprobacion: @_snapshot.LastCheckedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+                </p>
+            }
+
+            @if (!_snapshot.IsDevMode)
+            {
+                <div class="mt-3 d-flex gap-2 flex-wrap">
+                    @if (_snapshot.IsUpdateAvailable)
+                    {
+                        <button class="btn btn-primary"
+                                disabled="@(_isBusy || !_snapshot.CanCheckUpdates)"
+                                @onclick="UpdateNowAsync">
+                            @(_isBusy ? "Procesando..." : "Actualizar ahora")
+                        </button>
+                    }
+
+                    <button class="btn btn-outline-primary"
+                            disabled="@(_isBusy || !_snapshot.CanCheckUpdates)"
+                            @onclick="CheckForUpdatesAsync">
+                        @(_isBusy ? "Comprobando..." : "Buscar de nuevo")
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h2 class="h5 card-title">Sesion</h2>
+            <p class="mb-0">@_snapshot.StartupMessage</p>
+            @if (!string.IsNullOrWhiteSpace(_progressMessage))
+            {
+                <p class="text-primary fw-semibold mt-3 mb-0">@_progressMessage</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private VelopackAppSnapshot? _snapshot;
+    private bool _isBusy;
+    private string _progressMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _snapshot = UpdateService.GetSnapshot();
+        UpdateService.SnapshotChanged += HandleSnapshotChanged;
+        await UpdateService.EnsureStartupCheckAsync();
+        _snapshot = UpdateService.GetSnapshot();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        if (_snapshot is null || !_snapshot.CanCheckUpdates || _isBusy)
+        {
+            return;
+        }
+
+        _isBusy = true;
+        _progressMessage = string.Empty;
+        StateHasChanged();
+
+        _snapshot = await UpdateService.CheckForUpdatesAsync(message =>
+        {
+            _progressMessage = message;
+            InvokeAsync(StateHasChanged);
+        });
+
+        _progressMessage = string.Empty;
+        _isBusy = false;
+    }
+
+    private async Task UpdateNowAsync()
+    {
+        if (_snapshot is null || !_snapshot.CanCheckUpdates || _isBusy)
+        {
+            return;
+        }
+
+        _isBusy = true;
+        _progressMessage = string.Empty;
+        StateHasChanged();
+
+        var result = await UpdateService.DownloadAndApplyAsync(message =>
+        {
+            _progressMessage = message;
+            InvokeAsync(StateHasChanged);
+        });
+
+        _snapshot = result.Snapshot;
+        _progressMessage = result.ProgressMessage;
+        _isBusy = false;
+    }
+
+    private void HandleSnapshotChanged()
+    {
+        _snapshot = UpdateService.GetSnapshot();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private string GetStatusSummary()
+    {
+        if (_snapshot is null)
+        {
+            return "Cargando estado de actualizacion.";
+        }
+
+        if (_snapshot.IsDevMode)
+        {
+            return "Las actualizaciones no estan disponibles en dev mode.";
+        }
+
+        if (_snapshot.IsUpdateAvailable)
+        {
+            return $"Hay una nueva version disponible: {_snapshot.AvailableVersion}.";
+        }
+
+        return "No hay actualizaciones pendientes.";
+    }
+
+    private string GetUpdateHeadline()
+    {
+        if (_snapshot is null)
+        {
+            return "Cargando";
+        }
+
+        if (_snapshot.IsDevMode)
+        {
+            return "Actualizaciones deshabilitadas";
+        }
+
+        if (_snapshot.IsUpdateAvailable)
+        {
+            return $"Actualizacion disponible: {_snapshot.AvailableVersion}";
+        }
+
+        return "Aplicacion al dia";
+    }
+
+    private string GetUpdateAlertClass()
+    {
+        if (_snapshot is null || _snapshot.IsDevMode)
+        {
+            return "alert alert-secondary mb-0";
+        }
+
+        return _snapshot.IsUpdateAvailable
+            ? "alert alert-warning mb-0"
+            : "alert alert-success mb-0";
+    }
+
+    public void Dispose()
+    {
+        UpdateService.SnapshotChanged -= HandleSnapshotChanged;
+    }
+}
