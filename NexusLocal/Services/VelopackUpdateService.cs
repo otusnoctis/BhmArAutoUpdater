@@ -1,7 +1,7 @@
 using Velopack;
 using Velopack.Sources;
 
-namespace VelopackMaui.Services;
+namespace NexusLocal.Services;
 
 public sealed class VelopackUpdateService
 {

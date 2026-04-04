@@ -1,4 +1,4 @@
-namespace VelopackMaui.Services;
+namespace NexusLocal.Services;
 
 public sealed class VelopackStartupState
 {

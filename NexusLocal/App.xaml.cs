@@ -1,7 +1,7 @@
 using Velopack;
-using VelopackMaui.Services;
+using NexusLocal.Services;
 
-namespace VelopackMaui;
+namespace NexusLocal;
 
 public partial class App : Application
 {
@@ -17,6 +17,6 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        return new Window(new MainPage()) { Title = "VelopackMaui" };
+        return new Window(new MainPage()) { Title = "NexusLocal" };
     }
 }

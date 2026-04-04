@@ -2,7 +2,7 @@
   <Project Path="BhmArAutoUpdater/BhmArAutoUpdater.csproj">
     <Deploy />
   </Project>
-  <Project Path="VelopackMaui/VelopackMaui.csproj">
+  <Project Path="NexusLocal/NexusLocal.csproj">
     <Deploy />
   </Project>
 </Solution>

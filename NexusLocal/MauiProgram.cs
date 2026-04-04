@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
-using VelopackMaui.Services;
+using NexusLocal.Services;
 
-namespace VelopackMaui;
+namespace NexusLocal;
 
 public static class MauiProgram
 {

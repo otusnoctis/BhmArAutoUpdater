@@ -1,4 +1,4 @@
-namespace VelopackMaui;
+namespace NexusLocal;
 
 public partial class MainPage : ContentPage
 {

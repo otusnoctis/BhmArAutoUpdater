@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml;
 
-namespace VelopackMaui.WinUI;
+namespace NexusLocal.WinUI;
 
 public partial class App : MauiWinUIApplication
 {

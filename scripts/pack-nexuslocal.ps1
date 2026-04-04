@@ -5,9 +5,9 @@ param(
 $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
-$projectPath = Join-Path $repoRoot "VelopackMaui\VelopackMaui.csproj"
-$publishDir = Join-Path $repoRoot "artifacts\VelopackMaui\publish"
-$releaseDir = Join-Path $repoRoot "artifacts\VelopackMaui\releases"
+$projectPath = Join-Path $repoRoot "NexusLocal\NexusLocal.csproj"
+$publishDir = Join-Path $repoRoot "artifacts\NexusLocal\publish"
+$releaseDir = Join-Path $repoRoot "artifacts\NexusLocal\releases"
 $propsPath = Join-Path $repoRoot "Directory.Build.props"
 [xml]$props = Get-Content $propsPath
 $velopackVersion = $props.Project.PropertyGroup.VelopackVersion
@@ -15,10 +15,10 @@ $velopackVersion = $props.Project.PropertyGroup.VelopackVersion
 New-Item -ItemType Directory -Path $publishDir -Force | Out-Null
 New-Item -ItemType Directory -Path $releaseDir -Force | Out-Null
 Get-ChildItem $releaseDir -File -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -in @("assets.win.json", "RELEASES", "releases.win.json", "VelopackMaui-win-Setup.exe", "VelopackMaui-win-Portable.zip") } |
+    Where-Object { $_.Name -in @("assets.win.json", "RELEASES", "releases.win.json", "NexusLocal-win-Setup.exe", "NexusLocal-win-Portable.zip") } |
     Remove-Item -Force
 
-Write-Host "Publishing VelopackMaui $Version..."
+Write-Host "Publishing NexusLocal $Version..."
 dotnet publish $projectPath `
     -c Release `
     -f net10.0-windows10.0.19041.0 `
@@ -29,13 +29,13 @@ dotnet publish $projectPath `
 
 $env:DOTNET_ROLL_FORWARD = "Major"
 
-Write-Host "Packing VelopackMaui release..."
+Write-Host "Packing NexusLocal release..."
 dnx --yes vpk --version $velopackVersion pack `
-    --packId "VelopackMaui" `
+    --packId "NexusLocal" `
     --packVersion $Version `
     --packDir $publishDir `
-    --mainExe "VelopackMaui.exe" `
-    --packTitle "Velopack Maui" `
+    --mainExe "NexusLocal.exe" `
+    --packTitle "NexusLocal" `
     --packAuthors "otusnoctis" `
     --runtime "win-x64" `
     --noPortable `
