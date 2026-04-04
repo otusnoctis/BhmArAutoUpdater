@@ -1,5 +1,6 @@
 using Velopack;
 using Velopack.Sources;
+using System.Reflection;
 
 var startupState = new StartupState();
 
@@ -10,11 +11,15 @@ VelopackApp.Build()
 
 var baseDirectory = AppContext.BaseDirectory;
 var isDevMode = baseDirectory.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase);
-var appVersion = isDevMode ? "Development build (dev mode)" : VelopackRuntimeInfo.VelopackProductVersion.ToString();
-var velopackVersion = VelopackRuntimeInfo.VelopackNugetVersion.ToString();
+var githubSource = new GithubSource("https://github.com/otusnoctis/BhmArAutoUpdater", "", false, null!);
 var updateManager = isDevMode
     ? null
-    : new UpdateManager(new GithubSource("https://github.com/otusnoctis/BhmArAutoUpdater", "", false, null));
+    : new UpdateManager(githubSource);
+var installedVersion = updateManager?.CurrentVersion?.ToString();
+var appVersion = isDevMode
+    ? $"{GetLocalAssemblyVersion()} (dev mode)"
+    : installedVersion ?? "Unknown";
+var velopackVersion = VelopackRuntimeInfo.VelopackNugetVersion.ToString();
 
 var updateStatus = BuildStartupStatus(startupState, isDevMode, appVersion);
 var instruction = isDevMode
@@ -24,15 +29,17 @@ var progressLine = string.Empty;
 
 Console.CursorVisible = false;
 
+var layout = RenderLayout(appVersion, velopackVersion, updateManager, instruction);
+
 while (true) {
-    Render(appVersion, velopackVersion, updateManager, updateStatus, progressLine, instruction);
+    UpdateDynamicSection(layout, updateManager, updateStatus, progressLine);
 
     if (Console.KeyAvailable) {
         var key = Console.ReadKey(intercept: true);
         if (!isDevMode && key.Key == ConsoleKey.U) {
             var updateResult = await TryUpdateAsync(updateManager!, appVersion, progress => {
                 progressLine = progress;
-                Render(appVersion, velopackVersion, updateManager, updateStatus, progressLine, instruction);
+                UpdateDynamicSection(layout, updateManager, updateStatus, progressLine);
             });
 
             updateStatus = updateResult.Status;
@@ -101,13 +108,7 @@ static string BuildStartupStatus(StartupState startupState, bool isDevMode, stri
     return $"Instalacion activa. Version actual: {appVersion}.";
 }
 
-static void Render(
-    string appVersion,
-    string velopackVersion,
-    UpdateManager? updateManager,
-    string updateStatus,
-    string progressLine,
-    string instruction)
+static LayoutMap RenderLayout(string appVersion, string velopackVersion, UpdateManager? updateManager, string instruction)
 {
     Console.Clear();
     Console.WriteLine("VelopackHello");
@@ -117,16 +118,52 @@ static void Render(
     Console.WriteLine($"Update pending restart: {(updateManager?.UpdatePendingRestart is not null ? "Yes" : "No")}");
     Console.WriteLine();
     Console.WriteLine("Estado");
-    Console.WriteLine(updateStatus);
-    if (!string.IsNullOrWhiteSpace(progressLine)) {
-        Console.WriteLine(progressLine);
-    }
-
+    var statusRow = Console.CursorTop;
+    Console.WriteLine();
+    var progressRow = Console.CursorTop;
+    Console.WriteLine();
     Console.WriteLine();
     Console.WriteLine("Hora actual:");
-    Console.WriteLine(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+    var clockRow = Console.CursorTop;
+    Console.WriteLine();
     Console.WriteLine();
     Console.WriteLine(instruction);
+
+    return new LayoutMap(statusRow, progressRow, clockRow);
+}
+
+static void UpdateDynamicSection(LayoutMap layout, UpdateManager? updateManager, string updateStatus, string progressLine)
+{
+    WriteLineAt(layout.StatusRow, updateStatus);
+    WriteLineAt(layout.ProgressRow, progressLine);
+    WriteLineAt(layout.ClockRow, DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
+    if (updateManager is not null) {
+        WriteLineAt(4, $"Update pending restart: {(updateManager.UpdatePendingRestart is not null ? "Yes" : "No")}");
+    }
+}
+
+static void WriteLineAt(int row, string text)
+{
+    var safeWidth = Math.Max(Console.WindowWidth - 1, 1);
+    var output = (text ?? string.Empty).PadRight(safeWidth);
+    if (output.Length > safeWidth) {
+        output = output[..safeWidth];
+    }
+
+    Console.SetCursorPosition(0, row);
+    Console.Write(output);
+}
+
+static string GetLocalAssemblyVersion()
+{
+    var informational = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+    if (!string.IsNullOrWhiteSpace(informational)) {
+        return informational;
+    }
+
+    var fileVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString();
+    return string.IsNullOrWhiteSpace(fileVersion) ? "Development build" : fileVersion;
 }
 
 sealed class StartupState
@@ -156,5 +193,7 @@ sealed class StartupState
         return null;
     }
 }
+
+sealed record LayoutMap(int StatusRow, int ProgressRow, int ClockRow);
 
 sealed record UpdateAttemptResult(string Status, string Progress);
