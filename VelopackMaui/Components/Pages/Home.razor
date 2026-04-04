@@ -1,0 +1,84 @@
+@page "/"
+@inject VelopackUpdateService UpdateService
+
+<PageTitle>VelopackMaui</PageTitle>
+
+<div class="hero">
+  <div class="hero__header">
+    <div>
+      <h1>VelopackMaui</h1>
+      <p>Spike minimo de MAUI Blazor Hybrid sobre Velopack.</p>
+    </div>
+    @if (_snapshot?.IsDevMode == true)
+    {
+      <span class="hero__chip hero__chip--danger">dev mode</span>
+    }
+  </div>
+
+  @if (_snapshot is not null)
+  {
+    <div class="hero__grid">
+      <section class="hero__card">
+        <h2>App</h2>
+        <p class="hero__value">@_snapshot.AppVersion</p>
+      </section>
+      <section class="hero__card">
+        <h2>Velopack</h2>
+        <p class="hero__value">@_snapshot.VelopackVersion</p>
+      </section>
+      <section class="hero__card">
+        <h2>Instalacion</h2>
+        <p class="hero__value">@( _snapshot.IsInstalled ? "Instalada" : "No instalada")</p>
+      </section>
+    </div>
+
+    <section class="hero__panel">
+      <h2>Estado</h2>
+      <p>@_snapshot.StatusMessage</p>
+      @if (!string.IsNullOrWhiteSpace(_progressMessage))
+      {
+        <p class="hero__progress">@_progressMessage</p>
+      }
+    </section>
+
+    <div class="hero__actions">
+      <button class="hero__button"
+              disabled="@(!_snapshot.CanCheckUpdates || _isBusy)"
+              @onclick="CheckForUpdatesAsync">
+        @(_isBusy ? "Procesando..." : "Buscar actualizaciones")
+      </button>
+    </div>
+  }
+</div>
+
+@code {
+  private VelopackAppSnapshot? _snapshot;
+  private bool _isBusy;
+  private string _progressMessage = string.Empty;
+
+  protected override void OnInitialized()
+  {
+      _snapshot = UpdateService.GetSnapshot();
+  }
+
+  private async Task CheckForUpdatesAsync()
+  {
+      if (_snapshot is null || !_snapshot.CanCheckUpdates || _isBusy) {
+          return;
+      }
+
+      _isBusy = true;
+      _progressMessage = string.Empty;
+      StateHasChanged();
+
+      var result = await UpdateService.CheckForUpdatesAndApplyAsync(message =>
+      {
+          _progressMessage = message;
+          InvokeAsync(StateHasChanged);
+      });
+
+      _progressMessage = result.ProgressMessage;
+      _snapshot = UpdateService.GetSnapshot(result.StatusMessage);
+      _isBusy = false;
+  }
+}

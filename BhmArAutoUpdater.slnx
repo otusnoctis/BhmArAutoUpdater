@@ -8,4 +8,7 @@
   <Project Path="VelopackHello/VelopackHello.csproj">
     <Deploy />
   </Project>
+  <Project Path="VelopackMaui/VelopackMaui.csproj">
+    <Deploy />
+  </Project>
 </Solution>

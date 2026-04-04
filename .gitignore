@@ -3,6 +3,7 @@ bin/
 obj/
 artifacts/
 Releases/
+_verify_*/
 
 # NuGet
 /packages/

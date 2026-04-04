@@ -1,0 +1,105 @@
+.hero {
+    margin: 0 auto;
+    max-width: 960px;
+}
+
+.hero__header {
+    align-items: flex-start;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+}
+
+.hero__header h1 {
+    color: #102342;
+    font-size: 2rem;
+    margin: 0 0 0.35rem;
+}
+
+.hero__header p {
+    color: #4b5973;
+    margin: 0;
+}
+
+.hero__chip {
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.4rem 0.75rem;
+    text-transform: uppercase;
+}
+
+.hero__chip--danger {
+    background: #ffe0e0;
+    color: #b42318;
+}
+
+.hero__grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    margin-bottom: 1rem;
+}
+
+.hero__card,
+.hero__panel {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(16, 35, 66, 0.08);
+    border-radius: 1.2rem;
+    box-shadow: 0 18px 36px rgba(27, 51, 84, 0.08);
+    padding: 1.2rem 1.25rem;
+}
+
+.hero__card h2,
+.hero__panel h2 {
+    color: #36527d;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    margin: 0 0 0.75rem;
+    text-transform: uppercase;
+}
+
+.hero__value {
+    color: #102342;
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.hero__panel {
+    margin-bottom: 1rem;
+}
+
+.hero__panel p {
+    color: #24364f;
+    margin: 0;
+}
+
+.hero__progress {
+    color: #1256bf;
+    font-weight: 600;
+    margin-top: 0.85rem;
+}
+
+.hero__actions {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.hero__button {
+    background: linear-gradient(135deg, #2f7be5 0%, #1657bf 100%);
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 700;
+    padding: 0.85rem 1.25rem;
+}
+
+.hero__button:disabled {
+    cursor: default;
+    opacity: 0.45;
+}
