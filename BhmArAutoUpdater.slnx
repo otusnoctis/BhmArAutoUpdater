@@ -5,4 +5,7 @@
   <Project Path="BhmArAutoUpdater/BhmArAutoUpdater.csproj">
     <Deploy />
   </Project>
+  <Project Path="VelopackHello/VelopackHello.csproj">
+    <Deploy />
+  </Project>
 </Solution>
