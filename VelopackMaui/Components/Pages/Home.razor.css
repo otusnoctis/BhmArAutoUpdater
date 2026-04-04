@@ -52,6 +52,62 @@
     padding: 1.2rem 1.25rem;
 }
 
+.hero__update {
+    align-items: center;
+    border: 1px solid rgba(16, 35, 66, 0.08);
+    border-radius: 1.2rem;
+    box-shadow: 0 18px 36px rgba(27, 51, 84, 0.08);
+    display: flex;
+    gap: 1.25rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 1.25rem;
+}
+
+.hero__update--ok {
+    background: linear-gradient(135deg, rgba(214, 246, 227, 0.95) 0%, rgba(246, 255, 250, 0.98) 100%);
+}
+
+.hero__update--pending {
+    background: linear-gradient(135deg, rgba(255, 235, 204, 0.96) 0%, rgba(255, 248, 238, 0.98) 100%);
+}
+
+.hero__update--neutral {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.hero__update-copy h2 {
+    color: #102342;
+    font-size: 1.3rem;
+    margin: 0 0 0.45rem;
+}
+
+.hero__update-copy p {
+    color: #24364f;
+    margin: 0;
+}
+
+.hero__eyebrow {
+    color: #36527d;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+}
+
+.hero__meta {
+    color: #5a6c8e;
+    font-size: 0.88rem;
+    margin-top: 0.65rem;
+}
+
+.hero__update-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.75rem;
+}
+
 .hero__card h2,
 .hero__panel h2 {
     color: #36527d;
@@ -99,7 +155,24 @@
     padding: 0.85rem 1.25rem;
 }
 
+.hero__button--secondary {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(18, 86, 191, 0.18);
+    color: #1256bf;
+}
+
 .hero__button:disabled {
     cursor: default;
     opacity: 0.45;
+}
+
+@media (max-width: 760px) {
+    .hero__update {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .hero__update-actions {
+        width: 100%;
+    }
 }

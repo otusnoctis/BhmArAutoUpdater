@@ -1,3 +1,3 @@
 namespace VelopackMaui.Services;
 
-public sealed record VelopackUpdateResult(string StatusMessage, string ProgressMessage);
+public sealed record VelopackUpdateResult(VelopackAppSnapshot Snapshot, string ProgressMessage);

@@ -7,6 +7,9 @@ public sealed class VelopackUpdateService
 {
     private readonly VelopackStartupState _startupState;
     private readonly UpdateManager? _updateManager;
+    private UpdateInfo? _availableUpdate;
+    private DateTimeOffset? _lastCheckedAt;
+    private string _lastUpdateMessage = "Aun no se han consultado actualizaciones.";
 
     public VelopackUpdateService(VelopackStartupState startupState)
     {
@@ -32,29 +35,56 @@ public sealed class VelopackUpdateService
             VelopackRuntimeInfo.VelopackNugetVersion.ToString(),
             IsDevMode,
             _updateManager?.IsInstalled == true,
-            _updateManager?.UpdatePendingRestart is not null,
             !IsDevMode && _updateManager?.IsInstalled == true,
-            overrideStatus ?? BuildStartupStatus(appVersion));
+            BuildStartupStatus(appVersion),
+            overrideStatus ?? _lastUpdateMessage,
+            _availableUpdate is not null,
+            _availableUpdate?.TargetFullRelease.Version.ToString(),
+            _lastCheckedAt);
     }
 
-    public async Task<VelopackUpdateResult> CheckForUpdatesAndApplyAsync(Action<string> reportProgress)
+    public async Task<VelopackAppSnapshot> CheckForUpdatesAsync(Action<string>? reportProgress = null)
     {
         if (IsDevMode || _updateManager is null || !_updateManager.IsInstalled) {
-            return new VelopackUpdateResult(
-                "Dev mode o instalacion no valida: actualizaciones deshabilitadas.",
-                string.Empty);
+            _availableUpdate = null;
+            _lastCheckedAt = null;
+            _lastUpdateMessage = "Dev mode o instalacion no valida: actualizaciones deshabilitadas.";
+            return GetSnapshot();
         }
 
-        reportProgress("Comprobando actualizaciones...");
+        reportProgress?.Invoke("Comprobando actualizaciones...");
         var updates = await _updateManager.CheckForUpdatesAsync();
+        _lastCheckedAt = DateTimeOffset.Now;
         if (updates is null) {
-            return new VelopackUpdateResult("No hay actualizaciones disponibles.", string.Empty);
+            _availableUpdate = null;
+            _lastUpdateMessage = "La aplicacion esta al dia.";
+            return GetSnapshot();
+        }
+
+        _availableUpdate = updates;
+        _lastUpdateMessage = $"Hay una actualizacion disponible a {_availableUpdate.TargetFullRelease.Version}.";
+        return GetSnapshot();
+    }
+
+    public async Task<VelopackUpdateResult> DownloadAndApplyAsync(Action<string> reportProgress)
+    {
+        if (IsDevMode || _updateManager is null || !_updateManager.IsInstalled) {
+            _availableUpdate = null;
+            _lastUpdateMessage = "Dev mode o instalacion no valida: actualizaciones deshabilitadas.";
+            return new VelopackUpdateResult(GetSnapshot(), string.Empty);
+        }
+
+        if (_availableUpdate is null) {
+            var checkedSnapshot = await CheckForUpdatesAsync(reportProgress);
+            if (_availableUpdate is null) {
+                return new VelopackUpdateResult(checkedSnapshot, string.Empty);
+            }
         }
 
         var currentVersion = _updateManager.CurrentVersion?.ToString() ?? "Unknown";
-        var targetVersion = updates.TargetFullRelease.Version.ToString();
+        var targetVersion = _availableUpdate.TargetFullRelease.Version.ToString();
 
-        await _updateManager.DownloadUpdatesAsync(updates, progress =>
+        await _updateManager.DownloadUpdatesAsync(_availableUpdate, progress =>
         {
             reportProgress($"Descargando {targetVersion}... {progress}%");
         });
@@ -62,14 +92,15 @@ public sealed class VelopackUpdateService
         reportProgress($"Actualizacion descargada. Reiniciando hacia {targetVersion}...");
 
         _updateManager.ApplyUpdatesAndRestart(
-            updates.TargetFullRelease,
+            _availableUpdate.TargetFullRelease,
             [
                 "--updated-from", currentVersion,
                 "--updated-to", targetVersion,
-                "--updated-package", updates.TargetFullRelease.FileName
+                "--updated-package", _availableUpdate.TargetFullRelease.FileName
             ]);
 
-        return new VelopackUpdateResult("La actualizacion se ha preparado para reinicio.", string.Empty);
+        _lastUpdateMessage = $"La actualizacion a {targetVersion} se ha preparado para reinicio.";
+        return new VelopackUpdateResult(GetSnapshot(), string.Empty);
     }
 
     private string BuildStartupStatus(string appVersion)

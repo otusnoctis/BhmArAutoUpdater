@@ -5,6 +5,9 @@ public sealed record VelopackAppSnapshot(
     string VelopackVersion,
     bool IsDevMode,
     bool IsInstalled,
-    bool UpdatePendingRestart,
     bool CanCheckUpdates,
-    string StatusMessage);
+    string StartupMessage,
+    string UpdateMessage,
+    bool IsUpdateAvailable,
+    string? AvailableVersion,
+    DateTimeOffset? LastCheckedAt);

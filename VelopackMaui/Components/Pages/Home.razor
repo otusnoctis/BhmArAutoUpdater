@@ -26,28 +26,54 @@
         <h2>Velopack</h2>
         <p class="hero__value">@_snapshot.VelopackVersion</p>
       </section>
-      <section class="hero__card">
-        <h2>Instalacion</h2>
-        <p class="hero__value">@( _snapshot.IsInstalled ? "Instalada" : "No instalada")</p>
-      </section>
     </div>
 
+    <section class="hero__update @(GetUpdatePanelClass())">
+      <div class="hero__update-copy">
+        <p class="hero__eyebrow">Actualizaciones</p>
+        <h2>@GetUpdateHeadline()</h2>
+        <p>@_snapshot.UpdateMessage</p>
+        @if (_snapshot.LastCheckedAt is not null)
+        {
+          <p class="hero__meta">Ultima comprobacion: @_snapshot.LastCheckedAt.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</p>
+        }
+      </div>
+      @if (!_snapshot.IsDevMode)
+      {
+        <div class="hero__update-actions">
+          @if (_snapshot.IsUpdateAvailable)
+          {
+            <button class="hero__button"
+                    disabled="@(_isBusy || !_snapshot.CanCheckUpdates)"
+                    @onclick="UpdateNowAsync">
+              @(_isBusy ? "Procesando..." : "Actualizar ahora")
+            </button>
+            <button class="hero__button hero__button--secondary"
+                    disabled="@(_isBusy || !_snapshot.CanCheckUpdates)"
+                    @onclick="CheckForUpdatesAsync">
+              Buscar de nuevo
+            </button>
+          }
+          else
+          {
+            <button class="hero__button hero__button--secondary"
+                    disabled="@(_isBusy || !_snapshot.CanCheckUpdates)"
+                    @onclick="CheckForUpdatesAsync">
+              @(_isBusy ? "Comprobando..." : "Buscar de nuevo")
+            </button>
+          }
+        </div>
+      }
+    </section>
+
     <section class="hero__panel">
-      <h2>Estado</h2>
-      <p>@_snapshot.StatusMessage</p>
+      <h2>Sesion</h2>
+      <p>@_snapshot.StartupMessage</p>
       @if (!string.IsNullOrWhiteSpace(_progressMessage))
       {
         <p class="hero__progress">@_progressMessage</p>
       }
     </section>
-
-    <div class="hero__actions">
-      <button class="hero__button"
-              disabled="@(!_snapshot.CanCheckUpdates || _isBusy)"
-              @onclick="CheckForUpdatesAsync">
-        @(_isBusy ? "Procesando..." : "Buscar actualizaciones")
-      </button>
-    </div>
   }
 </div>
 
@@ -56,9 +82,13 @@
   private bool _isBusy;
   private string _progressMessage = string.Empty;
 
-  protected override void OnInitialized()
+  protected override async Task OnInitializedAsync()
   {
       _snapshot = UpdateService.GetSnapshot();
+      if (_snapshot.CanCheckUpdates)
+      {
+          await CheckForUpdatesAsync();
+      }
   }
 
   private async Task CheckForUpdatesAsync()
@@ -71,14 +101,60 @@
       _progressMessage = string.Empty;
       StateHasChanged();
 
-      var result = await UpdateService.CheckForUpdatesAndApplyAsync(message =>
+      _snapshot = await UpdateService.CheckForUpdatesAsync(message =>
       {
           _progressMessage = message;
           InvokeAsync(StateHasChanged);
       });
 
-      _progressMessage = result.ProgressMessage;
-      _snapshot = UpdateService.GetSnapshot(result.StatusMessage);
+      _progressMessage = string.Empty;
       _isBusy = false;
+  }
+
+  private async Task UpdateNowAsync()
+  {
+      if (_snapshot is null || !_snapshot.CanCheckUpdates || _isBusy) {
+          return;
+      }
+
+      _isBusy = true;
+      _progressMessage = string.Empty;
+      StateHasChanged();
+
+      var result = await UpdateService.DownloadAndApplyAsync(message =>
+      {
+          _progressMessage = message;
+          InvokeAsync(StateHasChanged);
+      });
+
+      _snapshot = result.Snapshot;
+      _progressMessage = result.ProgressMessage;
+      _isBusy = false;
+  }
+
+  private string GetUpdateHeadline()
+  {
+      if (_snapshot is null) {
+          return "Cargando";
+      }
+
+      if (_snapshot.IsDevMode) {
+          return "Actualizaciones deshabilitadas";
+      }
+
+      if (_snapshot.IsUpdateAvailable) {
+          return $"Actualizacion disponible: {_snapshot.AvailableVersion}";
+      }
+
+      return "Aplicacion al dia";
+  }
+
+  private string GetUpdatePanelClass()
+  {
+      if (_snapshot is null || _snapshot.IsDevMode) {
+          return "hero__update--neutral";
+      }
+
+      return _snapshot.IsUpdateAvailable ? "hero__update--pending" : "hero__update--ok";
   }
 }
