@@ -1,5 +1,6 @@
 <Project>
   <PropertyGroup>
     <VelopackVersion>0.0.1298</VelopackVersion>
+    <GitHubRepositoryUrl>https://github.com/otusnoctis/BhmArAutoUpdater</GitHubRepositoryUrl>
   </PropertyGroup>
 </Project>

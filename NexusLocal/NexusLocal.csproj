@@ -21,11 +21,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <MauiIcon Include="..\BhmArAutoUpdater\Resources\AppIcon\appicon.svg"
-              ForegroundFile="..\BhmArAutoUpdater\Resources\AppIcon\appiconfg.svg"
+    <MauiIcon Include="Resources\AppIcon\appicon.svg"
+              ForegroundFile="Resources\AppIcon\appiconfg.svg"
               Color="#808080" />
-    <MauiSplashScreen Include="..\BhmArAutoUpdater\Resources\Splash\splash.svg" Color="#808080" BaseSize="128,128" />
-    <MauiFont Include="..\BhmArAutoUpdater\Resources\Fonts\*" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#808080" BaseSize="128,128" />
+    <MauiImage Include="Resources\Images\*" />
+    <MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
+    <MauiFont Include="Resources\Fonts\*" />
+    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,6 +40,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="GitHubRepositoryUrl" Value="$(GitHubRepositoryUrl)" />
   </ItemGroup>
 
 </Project>

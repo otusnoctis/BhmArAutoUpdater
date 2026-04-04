@@ -40,7 +40,7 @@ public sealed class AppEnvironment
         var currentDirectory = new DirectoryInfo(startDirectory);
         while (currentDirectory is not null)
         {
-            if (File.Exists(Path.Combine(currentDirectory.FullName, "BhmArAutoUpdater.slnx")))
+            if (File.Exists(Path.Combine(currentDirectory.FullName, "Directory.Build.props")))
             {
                 return currentDirectory.FullName;
             }

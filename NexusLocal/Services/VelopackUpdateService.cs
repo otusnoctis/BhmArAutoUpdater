@@ -1,10 +1,13 @@
 using Velopack;
 using Velopack.Sources;
+using System.Reflection;
 
 namespace NexusLocal.Services;
 
 public sealed class VelopackUpdateService
 {
+    private const string GitHubRepositoryUrlMetadataKey = "GitHubRepositoryUrl";
+
     private readonly VelopackStartupState _startupState;
     private readonly UpdateManager? _updateManager;
     private UpdateInfo? _availableUpdate;
@@ -16,13 +19,29 @@ public sealed class VelopackUpdateService
         _startupState = startupState;
         IsDevMode = AppContext.BaseDirectory.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase);
 
-        if (!IsDevMode) {
-            var source = new GithubSource("https://github.com/otusnoctis/BhmArAutoUpdater", "", false, null!);
+        if (!IsDevMode)
+        {
+            var source = new GithubSource(GetRepositoryUrl(), "", false, null!);
             _updateManager = new UpdateManager(source);
         }
     }
 
     public bool IsDevMode { get; }
+
+    private static string GetRepositoryUrl()
+    {
+        var metadataValue = Assembly.GetExecutingAssembly()
+            .GetCustomAttributes<AssemblyMetadataAttribute>()
+            .FirstOrDefault(attribute => attribute.Key == GitHubRepositoryUrlMetadataKey)
+            ?.Value;
+
+        if (string.IsNullOrWhiteSpace(metadataValue))
+        {
+            throw new InvalidOperationException("GitHubRepositoryUrl assembly metadata is missing.");
+        }
+
+        return metadataValue;
+    }
 
     public VelopackAppSnapshot GetSnapshot(string? overrideStatus = null)
     {
