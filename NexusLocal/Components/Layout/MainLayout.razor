@@ -1,7 +1,13 @@
 @inherits LayoutComponentBase
 
-<div class="shell">
-  <main class="shell__main">
-    @Body
-  </main>
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <article class="content p-4">
+            @Body
+        </article>
+    </main>
 </div>
